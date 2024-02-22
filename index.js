@@ -24,10 +24,20 @@ let persons = [
   },
 ];
 
+// get all persons
 app.get("/api/persons/", (request, response) => {
   response.json(persons);
 });
 
+// get single preson
+app.get("/api/persons/:id", (request, response) => {
+  const id = Number(request.params.id);
+  const person = persons.find((person) => person.id === id);
+
+  person ? response.json(person) : response.status(404).end();
+});
+
+// get amount of people and request time
 app.get("/info", (request, response) => {
   const now = new Date();
   response.send(`<p>Phonebook has info for ${persons.length} people</p>
