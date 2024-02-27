@@ -1,6 +1,6 @@
 # Phonebook App
 
-Welcome to the Phonebook app! This application allows users to manage a list of phone numbers by adding new contacts and deleting existing ones. The backend is built with Express.js and the frontend is built with React.
+Task for Full Stack Open exercies, part 3 - Programming a server with NodeJS and Express. Phonebook App - The backend is built with Express.js and the frontend is built with React.
 
 [Frontend Link](https://fullstackopen-part3-ia2j.onrender.com)
 [Backend Link](https://fullstackopen-part3-ia2j.onrender.com/api/persons)
