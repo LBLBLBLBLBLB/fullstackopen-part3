@@ -2,12 +2,13 @@ const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
 const app = express();
+require("dotenv").config();
+
+const Person = require("./modules/phonebook");
 
 app.use(express.json());
 app.use(morgan("tiny"));
-
 app.use(cors());
-
 app.use(express.static("dist"));
 
 morgan.token("post-data", (request, response) => {
@@ -26,61 +27,50 @@ app.use(
   })
 );
 
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
-
-// generate random id for persons
-const generateId = () => {
-  const maxId = persons.length > 0 ? Math.max(...persons.map((n) => n.id)) : 0;
-  return maxId + 1;
-};
+// // generate random id for persons
+// const generateId = () => {
+//   const maxId = persons.length > 0 ? Math.max(...persons.map((n) => n.id)) : 0;
+//   return maxId + 1;
+// };
 
 // get all persons
 app.get("/api/persons/", (request, response) => {
-  response.json(persons);
+  Person.find({}).then((person) => {
+    response.json(person);
+  });
 });
 
 // get single preson
 app.get("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  const person = persons.find((person) => person.id === id);
-
-  person ? response.json(person) : response.status(404).end();
+  Person.findById(request.params.id).then((person) => {
+    response.json(person);
+  });
 });
 
 // get amount of people and request time
 app.get("/info", (request, response) => {
-  const now = new Date();
-  response.send(`<p>Phonebook has info for ${persons.length} people</p>
-                 <br/>
-                 <p>${now}</p>`);
+  Person.countDocuments({}, (error, count) => {
+    if (error) {
+      console.error("Error counting persons:", error);
+      response.status(500).json({ error: "Internal server error" });
+    } else {
+      const now = new Date();
+      response.send(`<p>Phonebook has info for ${count} people</p>
+                     <br/>
+                     <p>${now}</p>`);
+    }
+  });
 });
 
 // delete person
 app.delete("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  persons = persons.filter((person) => person.id !== id);
-  response.status(204).end();
+  Person.findByIdAndDelete(request.params.id).then((deletedPerson) => {
+    if (deletedPerson) {
+      response.status(204).end();
+    } else {
+      response.status(404).json({ error: "Person not found" });
+    }
+  });
 });
 
 // add person
@@ -93,24 +83,16 @@ app.post("/api/persons", (request, response) => {
     });
   }
 
-  const isNameUnique = persons.some((person) => person.name === body.name);
-  if (isNameUnique) {
-    return response.status(400).json({
-      error: "name must be unique",
-    });
-  }
-
-  const person = {
-    id: generateId(),
+  const person = new Person({
     name: body.name,
     number: body.number,
-  };
+  });
 
-  persons = persons.concat(person);
-
-  response.json(person);
+  person.save().then((savedPerson) => {
+    response.json(savedPerson);
+  });
 });
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`server running on port ${PORT}`);
 });
